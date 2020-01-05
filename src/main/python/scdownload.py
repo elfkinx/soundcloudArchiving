@@ -6,9 +6,9 @@ import re
 import logging
 import os
 from pydub import AudioSegment
+from pathlib import Path
 from definitions import DATA_PATH
 
-logging.basicConfig(level=logging.INFO,format="scdownload - INFO: %(message)s")
 logger = logging.getLogger("scdownload")
 
 client_id = "r5ELVSy3RkcjX7ilaL7n2v1Z8irA9SL8"
@@ -24,13 +24,14 @@ logger.info("Track ID: " + track_id)
 
 track_info_url = "https://api-v2.soundcloud.com/tracks?ids={0}&client_id={1}".format(track_id, client_id)
 logger.info("Requesting track info url: " + track_info_url)
-track_info = requests.get(track_info_url)
+track_info_raw = requests.get(track_info_url)
+track_info = track_info_raw.json()[0]
 
-track_name = track_info.json()[0]["title"]
+track_name = track_info["title"]
 logger.info("Track name: " + track_name)
 
-# We should change this to search for the hls mp3 stream
-stream_url = track_info.json()[0]["media"]["transcodings"][0]["url"] + "?client_id={0}".format(client_id)
+# TODO: we should change this to search specifically for the hls mp3 stream
+stream_url = track_info["media"]["transcodings"][0]["url"] + "?client_id={0}".format(client_id)
 logger.info("Requesting stream url: " + stream_url)
 stream_info = requests.get(stream_url)
 
@@ -57,11 +58,41 @@ for file_url in m3u8_obj.files:
 
 full_track = functools.reduce(lambda r,next : r+next, files)
 
+uploader_name = track_info["user"]["username"]
+logger.info("Track uploader was {0}. Press enter to continue or provide an alternative artist name: ".format(uploader_name))
+custom_artist_name = input()
+
+artist_name = uploader_name if custom_artist_name == "" else custom_artist_name
+logger.info("Chosen artist name is: " + artist_name)
+
+artist_path = os.path.join(DATA_PATH, artist_name)
+Path(artist_path).mkdir(exist_ok=True)
+logger.info("Artist path is: " + artist_path)
+
 # need to remove special chars to make a valid file name
 file_name = re.sub(r'(?u)[^-\w]', '', track_name.strip().replace(' ', '_')) + ".mp3"
-file_path = os.path.join(DATA_PATH, file_name)
+file_path = os.path.join(artist_path, file_name)
 
 logger.info("Exporting track to file: " + file_path)
 full_track.export(file_path, format="mp3")
-
 logger.info("Exported track \"{0}\" to file {1}".format(track_name, file_path))
+
+metadata_file_name = "meta.txt"
+metadata_file_path = os.path.join(artist_path, metadata_file_name)
+
+logger.info("Writing metadata to file: " + metadata_file_path)
+with open(metadata_file_path, "w") as metadata_file:
+    # TODO: Filter the specific pieces of information we want to include
+    metadata_file.write(track_info_raw.text)
+
+artwork_url = track_info["artwork_url"]
+logger.info("Requesting artwork url: " + artwork_url)
+artwork_info = requests.get(artwork_url)
+
+artwork_name, artwork_ext = os.path.splitext(artwork_url)
+artwork_file_name = "artwork" + artwork_ext
+artwork_file_path = os.path.join(artist_path, artwork_file_name)
+
+logger.info("Writing artwork to file: " + artwork_file_path)
+with open(artwork_file_path, "wb") as artwork_file:
+    artwork_file.write(artwork_info.content)
