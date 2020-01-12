@@ -7,6 +7,7 @@ import logging
 import os
 import sys
 import json
+import lxml.html
 from pydub import AudioSegment
 from pathlib import Path
 from definitions import DATA_PATH
@@ -18,14 +19,22 @@ def get_html(url, stream=False):
         sys.exit(1)
     return response
 
-def get_track_info(url, client_id):
-    logger.info("Requesting track url: " + url)
-    response = get_html(url)
-    track_search = re.search(r'soundcloud://sounds:(.+?)"', response.text)
-    if (track_search == None):
-        logger.error("URL did not contain valid SoundCloud track information")
-        sys.exit(1)
-    track_id = track_search.group(1)
+def get_playlist_name(page_html):
+    xml = lxml.html.fromstring(page_html)
+    names = xml.xpath("//meta[@property='twitter:title']")
+    playlist_name = names[0].attrib["content"]
+    return playlist_name
+
+def get_playlist_info(playlist_id, client_id):
+    logger.info("Playlist ID: "+ playlist_id)
+    playlist_info_url = "https://api.soundcloud.com/playlists/{0}/tracks?client_id={1}".format(playlist_id, client_id)
+    logger.info("Requesting playlist info url: " + playlist_info_url)
+    playlist_info_response = get_html(playlist_info_url)
+    playlist_info_json = playlist_info_response.json()
+    logger.info("Found {0} tracks in playlist".format(len(playlist_info_json)))
+    return playlist_info_json
+
+def get_track_info(track_id, client_id):
     logger.info("Track ID: " + track_id)
     track_info_url = "https://api-v2.soundcloud.com/tracks?ids={0}&client_id={1}".format(track_id, client_id)
     logger.info("Requesting track info url: " + track_info_url)
@@ -72,12 +81,14 @@ def get_artist_name(uploader_name):
     artist_name = uploader_name if custom_artist_name == "" else custom_artist_name
     return artist_name
 
-def get_track_path(artist_name, track_name):
+def get_track_path(artist_name, album_name, track_name):
     artist_path = os.path.join(DATA_PATH, artist_name)
     Path(artist_path).mkdir(exist_ok=True)
+    album_path = os.path.join(artist_path, album_name)
+    Path(album_path).mkdir(exist_ok=True)
     # need to remove special chars to make a valid file name
     track_name_clean = re.sub(r'(?u)[^-\w]', '', track_name.strip().replace(' ', '_'))
-    track_path = os.path.join(artist_path, track_name_clean)
+    track_path = os.path.join(album_path, track_name_clean)
     Path(track_path).mkdir(exist_ok=True)
     return track_path
 
@@ -85,7 +96,7 @@ def export_track(full_track, track_path, file_name):
     file_path = os.path.join(track_path, file_name)
     logger.info("Exporting track to file: " + file_path)
     full_track.export(file_path, format="mp3")
-    logger.info("Exported track \"{0}\" to file {1}".format(track_name, file_path))
+    logger.info("Exported track to file {0}".format(file_path))
 
 def export_metadata(track_info, track_path, file_name):
     file_path = os.path.join(track_path, file_name)
@@ -100,41 +111,62 @@ def export_artwork(artwork, track_path, file_name):
     with open(artwork_file_path, "wb") as artwork_file:
         artwork_file.write(artwork)
 
+def archive_track(track_id, client_id, album_name="Singles"):
+    track_info = get_track_info(track_id, client_id)
+
+    track_name = track_info["title"]
+    logger.info("Track name: " + track_name)
+
+    full_track = get_track(track_info, client_id)
+
+    uploader_name = track_info["user"]["username"]
+    logger.info(
+        "Track uploader was {0}. Press enter to continue or provide an alternative artist name: ".format(uploader_name))
+
+    artist_name = get_artist_name(uploader_name)
+    logger.info("Chosen artist name is: " + artist_name)
+
+    track_path = get_track_path(artist_name, album_name, track_name)
+    logger.info("Track path is: " + track_path)
+
+    export_track(full_track, track_path, "track.mp3")
+    export_metadata(track_info, track_path, "meta.txt")
+
+    artwork_url = track_info["artwork_url"]
+    logger.info("Requesting artwork url: " + artwork_url)
+    artwork_info = get_html(artwork_url)
+
+    artwork_name, artwork_ext = os.path.splitext(artwork_url)
+    artwork_file_name = "artwork" + artwork_ext
+
+    export_artwork(artwork_info.content, track_path, artwork_file_name)
+
 logger = logging.getLogger("scdownload")
 
 client_id = "r5ELVSy3RkcjX7ilaL7n2v1Z8irA9SL8"
 
 # url = "https://soundcloud.com/yung-bruh-3/gemstone-bullets-poppin-out-the-tech"
-logger.info("Enter the Souncloud URL of the track to download: ")
-track_url = input()
-track_info = get_track_info(track_url, client_id)
+logger.info("Enter the SoundCloud URL of the track/playlist to download: ")
+soundcloud_url = input()
+logger.info("Requesting SoundCloud url: " + soundcloud_url)
+response = get_html(soundcloud_url)
 
-track_name = track_info["title"]
-logger.info("Track name: " + track_name)
+track_search = re.search(r'soundcloud://sounds:(.+?)"', response.text)
+playlist_search = re.search(r'soundcloud://playlists:(.+?)"', response.text)
 
-full_track = get_track(track_info, client_id)
-
-uploader_name = track_info["user"]["username"]
-logger.info(
-        "Track uploader was {0}. Press enter to continue or provide an alternative artist name: ".format(uploader_name))
-
-artist_name = get_artist_name(uploader_name)
-logger.info("Chosen artist name is: " + artist_name)
-
-track_path = get_track_path(artist_name, track_name)
-logger.info("Track path is: " + track_path)
-
-export_track(full_track, track_path, "track.mp3")
-export_metadata(track_info, track_path, "meta.txt")
-
-artwork_url = track_info["artwork_url"]
-logger.info("Requesting artwork url: " + artwork_url)
-artwork_info = get_html(artwork_url)
-
-artwork_name, artwork_ext = os.path.splitext(artwork_url)
-artwork_file_name = "artwork" + artwork_ext
-
-export_artwork(artwork_info.content, track_path, artwork_file_name)
-
-
-
+if (track_search != None):
+    track_id = track_search.group(1)
+    logger.info("Found track ID {0} on page. Dowloading track...".format(track_id))
+    track_info = get_track_info(track_id, client_id)
+    archive_track(track_info)
+elif (playlist_search != None):
+    playlist_id = playlist_search.group(1)
+    logger.info("Found playlist ID {0} on page. Downloading playlist...".format(playlist_id))
+    playlist_name = get_playlist_name(response.content)
+    logger.info("Playlist name: "+ playlist_name)
+    playlist_info = get_playlist_info(playlist_id, client_id)
+    for track_info in playlist_info:
+        archive_track(str(track_info["id"]), client_id, album_name=playlist_name)
+else:
+    logger.error("No valid track or playlist ID found on page. Is this a valid SoundCloud link?")
+    sys.exit(1)
