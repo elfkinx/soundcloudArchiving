@@ -76,8 +76,8 @@ def get_track(track_info, client_id):
     full_track = functools.reduce(lambda r, next: r + next, files)
     return full_track
 
-def get_artist_name(uploader_name):
-    custom_artist_name = input()
+def get_artist_name(uploader_name, custom_artist_fn):
+    custom_artist_name = custom_artist_fn()
     artist_name = uploader_name if custom_artist_name == "" else custom_artist_name
     return artist_name
 
@@ -111,7 +111,7 @@ def export_artwork(artwork, track_path, file_name):
     with open(artwork_file_path, "wb") as artwork_file:
         artwork_file.write(artwork)
 
-def archive_track(track_id, client_id, album_name="Singles"):
+def archive_track(track_id, client_id, custom_artist_fn, album_name="Singles"):
     track_info = get_track_info(track_id, client_id)
 
     track_name = track_info["title"]
@@ -123,7 +123,7 @@ def archive_track(track_id, client_id, album_name="Singles"):
     logger.info(
         "Track uploader was {0}. Press enter to continue or provide an alternative artist name: ".format(uploader_name))
 
-    artist_name = get_artist_name(uploader_name)
+    artist_name = get_artist_name(uploader_name, custom_artist_fn)
     logger.info("Chosen artist name is: " + artist_name)
 
     track_path = get_track_path(artist_name, album_name, track_name)
@@ -145,28 +145,35 @@ logger = logging.getLogger("scdownload")
 
 client_id = "r5ELVSy3RkcjX7ilaL7n2v1Z8irA9SL8"
 
-# url = "https://soundcloud.com/yung-bruh-3/gemstone-bullets-poppin-out-the-tech"
-logger.info("Enter the SoundCloud URL of the track/playlist to download: ")
-soundcloud_url = input()
-logger.info("Requesting SoundCloud url: " + soundcloud_url)
-response = get_html(soundcloud_url)
+def download(url, custom_artist_fn):
+    logger.info("Requesting SoundCloud url: " + url)
+    response = get_html(url)
 
-track_search = re.search(r'soundcloud://sounds:(.+?)"', response.text)
-playlist_search = re.search(r'soundcloud://playlists:(.+?)"', response.text)
+    track_search = re.search(r'soundcloud://sounds:(.+?)"', response.text)
+    playlist_search = re.search(r'soundcloud://playlists:(.+?)"', response.text)
 
-if (track_search != None):
-    track_id = track_search.group(1)
-    logger.info("Found track ID {0} on page. Dowloading track...".format(track_id))
-    track_info = get_track_info(track_id, client_id)
-    archive_track(track_info)
-elif (playlist_search != None):
-    playlist_id = playlist_search.group(1)
-    logger.info("Found playlist ID {0} on page. Downloading playlist...".format(playlist_id))
-    playlist_name = get_playlist_name(response.content)
-    logger.info("Playlist name: "+ playlist_name)
-    playlist_info = get_playlist_info(playlist_id, client_id)
-    for track_info in playlist_info:
-        archive_track(str(track_info["id"]), client_id, album_name=playlist_name)
-else:
-    logger.error("No valid track or playlist ID found on page. Is this a valid SoundCloud link?")
-    sys.exit(1)
+    if (track_search != None):
+        track_id = track_search.group(1)
+        logger.info("Found track ID {0} on page. Dowloading track...".format(track_id))
+        archive_track(track_id, client_id, custom_artist_fn)
+        return 0
+    elif (playlist_search != None):
+        playlist_id = playlist_search.group(1)
+        logger.info("Found playlist ID {0} on page. Downloading playlist...".format(playlist_id))
+        playlist_name = get_playlist_name(response.content)
+        logger.info("Playlist name: " + playlist_name)
+        playlist_info = get_playlist_info(playlist_id, client_id)
+        for track_info in playlist_info:
+            archive_track(str(track_info["id"]), client_id, custom_artist_fn, album_name=playlist_name)
+        return 0
+    else:
+        logger.error("No valid track or playlist ID found on page. Is this a valid SoundCloud link?")
+        return -1
+
+def run_cmdline():
+    # url = "https://soundcloud.com/yung-bruh-3/gemstone-bullets-poppin-out-the-tech"
+    logger.info("Enter the SoundCloud URL of the track/playlist to download: ")
+    soundcloud_url = input()
+    result = download(soundcloud_url, input)
+    if (result < 0):
+        sys.exit(result)
