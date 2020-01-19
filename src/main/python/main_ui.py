@@ -1,35 +1,29 @@
 import tkinter
-from tkinter import messagebox
-import main.python.scdownload as scdownload
+from cefpython3 import cefpython as cef
+import os
+from main.python.download_ui import DownloadUI
+from main.python.files_ui import FilesUI
 
 class MainUI:
     window = tkinter.Tk()
     window.title("scdownload")
-    window.geometry("800x500")
-    url_label = tkinter.Label(window, text="SoundCloud URL")
-    url_input = tkinter.Entry(window)
-    download_button = tkinter.Button(window, text="Download")
+    window.state('zoomed')
+    window.rowconfigure(0, weight=1)
+    window.columnconfigure(0, weight=1,uniform="row0")
+    window.columnconfigure(1, weight=1,uniform="row0")
 
-    def custom_artist_fn(self):
-        return ""
+    left = tkinter.Frame(window,borderwidth=1,relief="solid")
+    right = tkinter.Frame(window,borderwidth=1,relief="solid")
 
-    def download_button_click(self, event):
-        result = scdownload.download(self.url_input.get(), self.custom_artist_fn)
-        tkinter.messagebox.showinfo("Alert", "Downloaded with result: "+ str(result))
-        return "break" # required or button remains sunken after click
-
-    def layout(self):
-        self.url_label.grid(row=0,column=0)
-        self.url_input.grid(row=0,column=1)
-        self.download_button.grid(row=0,column=2)
-
-    def bind_handlers(self):
-        self.download_button.bind("<Button-1>", self.download_button_click)
+    download_ui = DownloadUI(left)
+    files_ui = FilesUI(right)
 
     def run_ui(self):
-        self.layout()
-        self.bind_handlers()
-        self.window.mainloop()
+        self.left.grid(row=0,column=0,sticky='nsew')
+        self.right.grid(row=0,column=1,sticky='nsew')
+        cef.Initialize()
+        tkinter.mainloop()
+        cef.Shutdown()
 
 
 ui = MainUI()

@@ -1,0 +1,115 @@
+import tkinter
+from tkinter import messagebox
+from cefpython3 import cefpython as cef
+import requests
+import ctypes
+import main.python.scdownload as scdownload
+
+
+class DownloadUI:
+    def __init__(self, parent):
+        self.container = tkinter.Frame(parent,borderwidth=1,relief="solid")
+        self.download_frame = tkinter.Frame(self.container,borderwidth=1,relief="solid")
+        self.url_label = tkinter.Label(self.download_frame, text="SoundCloud URL")
+        self.url_input = tkinter.Entry(self.download_frame)
+        self.download_button = tkinter.Button(self.download_frame, text="Download")
+        self.preview_button = tkinter.Button(self.download_frame, text="Preview")
+        self.preview_frame = tkinter.Frame(self.container,borderwidth=1,relief="solid")
+        self.browser_frame = BrowserFrame(self.preview_frame,borderwidth=1,relief="solid")
+        self.layout()
+        self.bind_handlers()
+
+    def layout(self):
+        self.container.pack(expand="yes", fill="both")
+
+        self.download_frame.pack(fill="both")
+        self.download_frame.columnconfigure(0, weight=1, uniform="row0")
+        self.download_frame.columnconfigure(1, weight=1, uniform="row0")
+        self.download_frame.columnconfigure(2, weight=1, uniform="row0")
+        self.download_frame.columnconfigure(3, weight=1, uniform="row0")
+        self.url_label.grid(row=0,column=0,sticky="ew")
+        self.url_input.grid(row=0,column=1,sticky="ew")
+        self.download_button.grid(row=0,column=2,sticky="ew")
+        self.preview_button.grid(row=0,column=3,sticky="ew")
+
+        self.preview_frame.pack(expand="yes",fill="both")
+        self.browser_frame.pack(expand="yes",fill="both")
+
+    def bind_handlers(self):
+        self.download_button.bind("<Button-1>", self.download_button_click)
+        self.preview_button.bind("<Button-1>", self.preview_button_click)
+
+    def download_button_click(self, event):
+        result = scdownload.download(self.url_input.get(), self.custom_artist_fn)
+        messagebox.showinfo("Alert", "Downloaded with result: " + str(result))
+        return "break"  # required or button remains sunken after click
+
+    def preview_button_click(self, event):
+        self.browser_frame.browser.LoadUrl(self.url_input.get())
+        return "break"
+
+    def custom_artist_fn(self):
+        # TODO: Can add popup box or something here for user to confirm artist name
+        return ""
+
+
+class BrowserFrame(tkinter.Frame):
+    def __init__(self, master, cnf={}, **kw):
+        self.closing = False
+        self.browser = None
+        tkinter.Frame.__init__(self, master, cnf, **kw)
+        ctypes.windll.user32.LockSetForegroundWindow(0x0002)
+        self.bind("<FocusIn>", self.on_focus_in)
+        self.bind("<FocusOut>", self.on_focus_out)
+        self.bind("<Configure>", self.on_configure)
+        # self.focus_set()
+
+#"https://soundcloud.com/cryingelf/ayw-its-a-bonfire"
+
+    def update_url(self, url):
+        self.browser = cef.CreateBrowserSync(self.window_info, url=url)
+        assert self.browser
+
+    def embed_browser(self):
+        self.window_info = cef.WindowInfo()
+        rect = [0, 0, self.winfo_width(), self.winfo_height()]
+        self.window_info.SetAsChild(self.get_window_handle(), rect)
+        self.update_url("https://soundcloud.com/cryingelf/ayw-its-a-bonfire")
+        self.message_loop_work()
+
+    def get_window_handle(self):
+        return self.winfo_id()
+
+    def message_loop_work(self):
+        cef.MessageLoopWork()
+        self.after(10, self.message_loop_work)
+
+    def on_configure(self, _):
+        if not self.browser:
+            self.embed_browser()
+
+    def on_root_configure(self):
+        # Root <Configure> event will be called when top window is moved
+        if self.browser:
+            self.browser.NotifyMoveOrResizeStarted()
+
+    def on_mainframe_configure(self, width, height):
+        ctypes.windll.user32.SetWindowPos(self.browser.GetWindowHandle(), 0, 0, 0, width, height, 0x0002)
+        self.browser.NotifyMoveOrResizeStarted()
+
+    def on_focus_in(self, _):
+        if self.browser:
+            self.browser.SetFocus(True)
+
+    def on_focus_out(self, _):
+        if self.browser:
+            self.browser.SetFocus(False)
+
+    def on_root_close(self):
+        if self.browser:
+            self.browser.CloseBrowser(True)
+            self.clear_browser_references()
+        self.destroy()
+
+    def clear_browser_references(self):
+        self.browser = None
