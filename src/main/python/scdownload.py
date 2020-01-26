@@ -12,10 +12,11 @@ from pydub import AudioSegment
 from pathlib import Path
 from definitions import DATA_PATH
 
+
 def get_html(url, stream=False):
     response = requests.get(url, stream=stream)
-    if (response.status_code != 200):
-        logger.error("Received error reponse {0} when requesting URL {1}".format(url, response.status_code))
+    if response.status_code != 200:
+        logger.error("Received error reponse {0} when requesting URL {1}".format(response.status_code, url))
         sys.exit(1)
     return response
 
@@ -92,11 +93,13 @@ def get_track_path(artist_name, album_name, track_name):
     Path(track_path).mkdir(exist_ok=True)
     return track_path
 
+
 def export_track(full_track, track_path, file_name):
     file_path = os.path.join(track_path, file_name)
     logger.info("Exporting track to file: " + file_path)
     full_track.export(file_path, format="mp3")
     logger.info("Exported track to file {0}".format(file_path))
+
 
 def export_metadata(track_info, track_path, file_name):
     file_path = os.path.join(track_path, file_name)
@@ -105,13 +108,55 @@ def export_metadata(track_info, track_path, file_name):
         # TODO: Filter the specific pieces of information we want to include
         metadata_file.write(json.dumps(track_info))
 
-def export_artwork(artwork, track_path, file_name):
-    artwork_file_path = os.path.join(track_path, file_name)
-    logger.info("Writing artwork to file: " + artwork_file_path)
-    with open(artwork_file_path, "wb") as artwork_file:
-        artwork_file.write(artwork)
+def process_custom_metadata(metadata, client_id, track_id, track_info, track_path, file_name):
+    results = {}
+    for key in metadata:
+        if key == "playlists":
+            results[key] = get_playlists_metadata(client_id)
+        elif key == "albums":
+            results[key] = get_albums_metadata(client_id)
+        elif key == "background":
+            export_background_image(track_id, track_path)
 
-def archive_track(track_id, client_id, custom_artist_fn, album_name="Singles"):
+
+def export_background_image(track_id, track_path, filename="background.jpg"):
+    # TODO: Verify the image url by searching for it in the html content
+    background_image_url = "https://va.sndcdn.com/bg/soundcloud:tracks:{0}/soundcloud-tracks-{0}.jpg".format(track_id)
+    logging.info("Requesting background image from url: "+ background_image_url)
+    background_image_info = get_html(background_image_url)
+    export_image(background_image_info.content, track_path, filename)
+    logging.info("Written background image")
+
+def get_playlists_metadata(client_id):
+    # TODO: Limit should be configurable? First 1000 should be enough
+    playlists_url = "https://api-v2.soundcloud.com/tracks/646284687/playlists_without_albums?representation=mini&" \
+                    "client_id={0}&limit=1000".format(client_id)
+    logging.info("Requesting playlists metadata from url: "+ playlists_url)
+    playlists_info = get_html(playlists_url)
+    playlist_names = list(map(lambda x: x["title"], playlists_info.json()["collection"]))
+    logging.info("Got playlist names: "+ str(playlist_names))
+    return playlist_names
+
+
+def get_albums_metadata(client_id):
+    # TODO: Limit should be configurable? First 1000 should be enough
+    albums_url = "https://api-v2.soundcloud.com/tracks/646284687/albums?representation=mini&" \
+                    "client_id={0}&limit=1000".format(client_id)
+    logging.info("Requesting albums metadata from url: "+ albums_url)
+    albums_info = get_html(albums_url)
+    album_names = list(map(lambda x: x["title"], albums_info.json()["collection"]))
+    logging.info("Got album names: "+ str(album_names))
+    return album_names
+
+
+def export_image(artwork, track_path, file_name):
+    image_file_path = os.path.join(track_path, file_name)
+    logger.info("Writing image to file: " + image_file_path)
+    with open(image_file_path, "wb") as image_file:
+        image_file.write(artwork)
+
+
+def archive_track(track_id, client_id, custom_artist_fn, metadata, album_name="Singles"):
     track_info = get_track_info(track_id, client_id)
 
     track_name = track_info["title"]
@@ -130,7 +175,11 @@ def archive_track(track_id, client_id, custom_artist_fn, album_name="Singles"):
     logger.info("Track path is: " + track_path)
 
     export_track(full_track, track_path, "track.mp3")
-    export_metadata(track_info, track_path, "meta.txt")
+
+    if metadata == []:
+        export_metadata(track_info, track_path, "meta.txt")
+    else:
+        process_custom_metadata(metadata, client_id, track_id, track_info, track_path, "meta.txt")
 
     artwork_url = track_info["artwork_url"]
     logger.info("Requesting artwork url: " + artwork_url)
@@ -139,32 +188,34 @@ def archive_track(track_id, client_id, custom_artist_fn, album_name="Singles"):
     artwork_name, artwork_ext = os.path.splitext(artwork_url)
     artwork_file_name = "artwork" + artwork_ext
 
-    export_artwork(artwork_info.content, track_path, artwork_file_name)
+    export_image(artwork_info.content, track_path, artwork_file_name)
+
 
 logger = logging.getLogger("scdownload")
 
 client_id = "r5ELVSy3RkcjX7ilaL7n2v1Z8irA9SL8"
 
-def download(url, custom_artist_fn):
+
+def download(url, custom_artist_fn, metadata=[]):
     logger.info("Requesting SoundCloud url: " + url)
     response = get_html(url)
 
     track_search = re.search(r'soundcloud://sounds:(.+?)"', response.text)
     playlist_search = re.search(r'soundcloud://playlists:(.+?)"', response.text)
 
-    if (track_search != None):
+    if track_search != None:
         track_id = track_search.group(1)
         logger.info("Found track ID {0} on page. Dowloading track...".format(track_id))
-        archive_track(track_id, client_id, custom_artist_fn)
+        archive_track(track_id, client_id, custom_artist_fn, metadata)
         return 0
-    elif (playlist_search != None):
+    elif playlist_search != None:
         playlist_id = playlist_search.group(1)
         logger.info("Found playlist ID {0} on page. Downloading playlist...".format(playlist_id))
         playlist_name = get_playlist_name(response.content)
         logger.info("Playlist name: " + playlist_name)
         playlist_info = get_playlist_info(playlist_id, client_id)
         for track_info in playlist_info:
-            archive_track(str(track_info["id"]), client_id, custom_artist_fn, album_name=playlist_name)
+            archive_track(str(track_info["id"]), client_id, custom_artist_fn, metadata, album_name=playlist_name)
         return 0
     else:
         logger.error("No valid track or playlist ID found on page. Is this a valid SoundCloud link?")

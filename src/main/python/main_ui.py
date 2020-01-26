@@ -22,6 +22,7 @@ class MainUI:
         self.left.grid(row=0,column=0,sticky='nsew')
         self.right.grid(row=0,column=1,sticky='nsew')
         cef.Initialize()
+        # cef.MessageLoop()
         tkinter.mainloop()
         cef.Shutdown()
 
