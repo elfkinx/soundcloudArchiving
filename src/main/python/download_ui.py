@@ -23,16 +23,25 @@ class DownloadUI:
         self.metadata_frame = tkinter.Frame(self.container)
 
         self.track_metadata_frame = tkinter.Frame(self.metadata_frame)
+
+        self.track_title_label = tkinter.Label(self.track_metadata_frame, text="Track")
+
         self.albums_button = tkinter.Button(self.track_metadata_frame, text="Albums")
-        self.album_button = tkinter.Button(self.track_metadata_frame, text="Album")
-        self.album_button = tkinter.Button(self.track_metadata_frame, text="Album")
-        self.album_button = tkinter.Button(self.track_metadata_frame, text="Album")
-        self.album_button = tkinter.Button(self.track_metadata_frame, text="Album")
-        self.album_button = tkinter.Button(self.track_metadata_frame, text="Album")
-        self.album_button = tkinter.Button(self.track_metadata_frame, text="Album")
-        self.album_button = tkinter.Button(self.track_metadata_frame, text="Album")
-        self.album_button = tkinter.Button(self.track_metadata_frame, text="Album")
-        self.album_button = tkinter.Button(self.track_metadata_frame, text="Album")
+        self.artist_button = tkinter.Button(self.track_metadata_frame, text="Artist")
+        self.background_button = tkinter.Button(self.track_metadata_frame, text="Background")
+        self.comments_button = tkinter.Button(self.track_metadata_frame, text="Comments")
+        self.cover_art_button = tkinter.Button(self.track_metadata_frame, text="Cover Art")
+        self.date_button = tkinter.Button(self.track_metadata_frame, text="Date")
+        self.description_button = tkinter.Button(self.track_metadata_frame, text="Description")
+        self.likes_button = tkinter.Button(self.track_metadata_frame, text="Likes")
+        self.listens_button = tkinter.Button(self.track_metadata_frame, text="Listens")
+        self.playlists_button = tkinter.Button(self.track_metadata_frame, text="Playlists")
+        self.related_tracks_button = tkinter.Button(self.track_metadata_frame, text="Related Tracks")
+        self.reposts_button = tkinter.Button(self.track_metadata_frame, text="Reposts")
+        self.status_button = tkinter.Button(self.track_metadata_frame, text="Status")
+        self.tags_button = tkinter.Button(self.track_metadata_frame, text="Tags")
+
+        self.selected_metadata = set()
 
         self.bind_handlers()
         self.layout()
@@ -68,12 +77,71 @@ class DownloadUI:
         self.metadata_frame.rowconfigure(0, weight=1, uniform="row0")
         self.metadata_frame.rowconfigure(1, weight=1, uniform="row0")
         self.metadata_frame.rowconfigure(2, weight=1, uniform="row0")
+
         self.track_metadata_frame.grid(row=0, column=0, sticky="nsew")
+        self.track_metadata_frame.rowconfigure(0, weight=1, uniform="row0")
+        self.track_metadata_frame.rowconfigure(1, weight=1, uniform="row0")
+        self.track_metadata_frame.rowconfigure(3, weight=1, uniform="row0")
+        self.track_metadata_frame.columnconfigure(0, weight=1, uniform="col0")
+        self.track_metadata_frame.columnconfigure(1, weight=1, uniform="col0")
+        self.track_metadata_frame.columnconfigure(2, weight=1, uniform="col0")
+        self.track_metadata_frame.columnconfigure(3, weight=1, uniform="col0")
+        self.track_metadata_frame.columnconfigure(4, weight=1, uniform="col0")
+        self.track_metadata_frame.columnconfigure(5, weight=1, uniform="col0")
+        self.track_metadata_frame.columnconfigure(6, weight=1, uniform="col0")
+
+        self.track_title_label.grid(row=0, column=0, sticky="w")
+
+        xpad = 3
+        ypad = 3
+        self.albums_button.grid(row=1, column=0, sticky="ew", padx=xpad)
+        self.artist_button.grid(row=1, column=1, sticky="ew", padx=xpad)
+        self.background_button.grid(row=1, column=2, sticky="ew", padx=xpad)
+        self.comments_button.grid(row=1, column=3, sticky="ew", padx=xpad)
+        self.cover_art_button.grid(row=1, column=4, sticky="ew", padx=xpad)
+        self.date_button.grid(row=1, column=5, sticky="ew", padx=xpad)
+        self.description_button.grid(row=1, column=6, sticky="ew", padx=xpad)
+
+        self.likes_button.grid(row=2, column=0, sticky="ew", padx=xpad)
+        self.listens_button.grid(row=2, column=1, sticky="ew", padx=xpad)
+        self.playlists_button.grid(row=2, column=2, sticky="ew", padx=xpad)
+        self.related_tracks_button.grid(row=2, column=3, sticky="ew", padx=xpad)
+        self.reposts_button.grid(row=2, column=4, sticky="ew", padx=xpad)
+        self.status_button.grid(row=2, column=5, sticky="ew", padx=xpad)
+        self.tags_button.grid(row=2, column=6, sticky="ew", padx=xpad)
 
     def bind_handlers(self):
         self.download_button.bind("<Button-1>", self.download_button_click)
         self.preview_button.bind("<Button-1>", self.preview_button_click)
         self.url_input.bind("<Button-1>", self.force_focus)
+        self.albums_button.bind("<Button-1>", self.tag_button_handler)
+        self.artist_button.bind("<Button-1>", self.tag_button_handler)
+        self.background_button.bind("<Button-1>", self.tag_button_handler)
+        self.comments_button.bind("<Button-1>", self.tag_button_handler)
+        self.cover_art_button.bind("<Button-1>", self.tag_button_handler)
+        self.date_button.bind("<Button-1>", self.tag_button_handler)
+        self.description_button.bind("<Button-1>", self.tag_button_handler)
+        self.likes_button.bind("<Button-1>", self.tag_button_handler)
+        self.listens_button.bind("<Button-1>", self.tag_button_handler)
+        self.playlists_button.bind("<Button-1>", self.tag_button_handler)
+        self.related_tracks_button.bind("<Button-1>", self.tag_button_handler)
+        self.reposts_button.bind("<Button-1>", self.tag_button_handler)
+        self.status_button.bind("<Button-1>", self.tag_button_handler)
+        self.tags_button.bind("<Button-1>", self.tag_button_handler)
+
+    def tag_button_handler(self, event):
+        metadata_clicked = self.button_name_to_key(event.widget['text'])
+        if event.widget['bg'] == "#48cbd4":
+            logging.info("De-selecting metadata: "+ metadata_clicked)
+            self.selected_metadata.remove(metadata_clicked)
+            event.widget.configure(bg="#FFF", fg="#000")
+        else:
+            logging.info("Selecting metadata: "+ metadata_clicked)
+            self.selected_metadata.add(metadata_clicked)
+            event.widget.configure(bg="#48cbd4", fg="#FFF")
+
+    def button_name_to_key(self, name):
+        return name.lower().replace(" ", "_")
 
     def force_focus(self, event):
         event.widget.focus_force()
@@ -82,8 +150,10 @@ class DownloadUI:
         logging.info("Download button click")
         if self.url_input.get() != "":
             # TODO: Make this async so it doesn't lock up the UI
-            result = scdownload.download(self.url_input.get(), self.custom_artist_fn,
-                                         metadata=["playlists", "albums", "background"])
+            # TODO: Check track metadata works for playlist URLs
+            logging.info("Downloading with metadata: "+ str(self.selected_metadata))
+            result = scdownload.download(self.url_input.get(), self.custom_artist_fn, self.selected_metadata,
+                                         ['albums'])
             messagebox.showinfo("Alert", "Downloaded with result: " + str(result))
             # TODO: Make file tree view refresh on new downloads
         else:

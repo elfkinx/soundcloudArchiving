@@ -8,6 +8,7 @@ class MainUI:
     window = tkinter.Tk()
     window.title("scdownload")
     window.state('zoomed')
+    window.configure(background="#FFF")
     window.rowconfigure(0, weight=1)
     window.columnconfigure(0, weight=1,uniform="row0")
     window.columnconfigure(1, weight=1,uniform="row0")
