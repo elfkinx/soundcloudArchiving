@@ -153,7 +153,9 @@ class DownloadUI:
             # TODO: Check track metadata works for playlist URLs
             logging.info("Downloading with metadata: "+ str(self.selected_metadata))
             result = scdownload.download(self.url_input.get(), self.custom_artist_fn, self.selected_metadata,
-                                         ['albums'])
+                                         ['albums', 'comments', 'description', 'location', 'name', 'username',
+                                          'followers', 'following', 'likes', 'reposts', 'user_id', 'status',
+                                          'profile_picture', 'header', 'links'])
             messagebox.showinfo("Alert", "Downloaded with result: " + str(result))
             # TODO: Make file tree view refresh on new downloads
         else:

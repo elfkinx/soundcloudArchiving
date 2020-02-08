@@ -123,20 +123,109 @@ def export_metadata(track_info, track_path, file_name):
 
 def get_artist_metadata(metadata, client_id, track_info, artist_path):
     user_id = track_info['user']['id']
+    user_info = get_user_metadata(user_id, client_id)
     results = {}
     for key in metadata:
         if key == "albums":
             results[key] = get_user_albums_metdata(user_id, client_id)
+        elif key == "comments":
+            results[key] = get_user_comments_metadata(user_id, client_id)
+        elif key == "description":
+            results[key] = user_info['description']
+        elif key == "location":
+            results[key] = {
+                "country": user_info['country'],
+                "city": user_info['city']
+            }
+        elif key == "name":
+            results[key] = user_info['full_name']
+        elif key == "username":
+            results[key] = user_info['username']
+        elif key == "followers":
+            results[key] = user_info['followers_count']
+        elif key == "following":
+            results[key] = user_info['followings_count']
+        elif key == "likes":
+            results[key] = user_info['likes_count']
+        elif key == "reposts":
+            results[key] = user_info['reposts_count']
+        elif key == "user_id":
+            results[key] = user_id
+        elif key == "status":
+            results['pro'] = \
+                user_info['subscriptions'] and user_info['subscriptions'][0]['product']['id'] == "creator-pro-unlimited"
+        elif key == "profile_picture":
+            export_user_avatar(user_info['avatar_url'], artist_path)
+        elif key == "header":
+            export_header_image(user_info, artist_path)
+        elif key == "links":
+            results[key] = get_user_links(user_id, client_id)
     return results
 
 
+def get_user_links(user_id, client_id):
+    user_links_url = "https://api-v2.soundcloud.com/users/soundcloud:users:{0}/web-profiles?" \
+                     "client_id={1}".format(user_id, client_id)
+    logger.info("Requesting user links from URL: "+ user_links_url)
+    user_links_data = get_html(user_links_url).json()
+    logger.info("Got user links: "+ str(user_links_data))
+    return user_links_data
+
+
+def get_header_url(page_html):
+    header_url = re.search(r'visual_url":"(.+?)"', page_html).group(1)
+    return header_url
+
+
+def export_header_image(user_info, artist_path):
+    user_url = user_info['permalink_url']
+    logger.info("Requesting artist html page: "+ user_url)
+    user_info = get_html(user_url)
+    logger.info("Got artist html page")
+    header_url = get_header_url(user_info.text)
+    logger.info("Requesting header image from URL: "+ header_url)
+    header_data = get_html(header_url)
+    export_image(header_data.content, artist_path, "header.jpg")
+
+
+def export_user_avatar(avatar_url, artist_path):
+    logging.info("Requesting user avatar image from url: " + avatar_url)
+    avatar_image_info = get_html(avatar_url)
+    export_image(avatar_image_info.content, artist_path, "avatar.jpg")
+    logging.info("Written user avatar image")
+
+
+def get_user_metadata(user_id, client_id):
+    user_url = "https://api.soundcloud.com/users/{0}?client_id={1}".format(user_id, client_id)
+    logger.info("Requesting user metadata from URL: "+ user_url)
+    user_info = get_html(user_url)
+    user_data = user_info.json()
+    logger.info("Got user metadata: "+ str(user_data))
+    return user_data
+
+
 def get_user_albums_metdata(user_id, client_id):
-    albums_url = "https://api-v2.soundcloud.com/users/{0}/albums?client_id={1}&limit=1000".format(user_id, client_id)
+    albums_url = "https://api-v2.soundcloud.com/users/{0}/albums?client_id={1}&limit=100".format(user_id, client_id)
     logger.info("Requesting albums metadata from URL: "+ albums_url)
     albums_info = get_html(albums_url)
-    albums_data = list(map(lambda x: x['publisher_metadata']['album_title'], albums_info.json()['collection']))
+    albums_data = list(map(lambda x: x['title'], albums_info.json()['collection']))
     logger.info("Got album names: "+ str(albums_data))
     return albums_data
+
+
+def get_user_comments_metadata(user_id, client_id):
+    comments_url = "https://api-v2.soundcloud.com/users/{0}/comments?client_id={1}&limit=100".format(user_id, client_id)
+    logger.info("Requesting comments metadata from URL: "+ comments_url)
+    comments_info = get_html(comments_url)
+    comments_data = list(map(lambda x: {
+        "date": x["created_at"],
+        "comment": x["body"],
+        "timestamp": x["timestamp"],
+        "track_name": x["track"]["title"],
+        "track_url": x["track"]["permalink_url"]
+    }, comments_info.json()['collection']))
+    logger.info("Got comments: "+ str(comments_data))
+    return comments_data
 
 
 def get_track_metadata(metadata, client_id, track_id, track_info, track_path):
@@ -174,9 +263,9 @@ def get_track_metadata(metadata, client_id, track_id, track_info, track_path):
 
 
 def get_comments(track_id, client_id):
-    # TODO: Limit should be configurable? First 1000 should be enough
+    # TODO: Limit should be configurable? First 100 should be enough
     comments_url = "https://api-v2.soundcloud.com/tracks/{0}/comments?threaded=1&filter_replies=0&" \
-                   "client_id={1}&limit=1000".format(track_id, client_id)
+                   "client_id={1}&limit=100".format(track_id, client_id)
     logging.info("Requesting comments metadata from url: "+ comments_url)
     comments_info = get_html(comments_url)
     comments_data = list(map(lambda x: {
@@ -219,9 +308,9 @@ def export_background_image(track_id, track_path, filename="background.jpg"):
 
 
 def get_track_playlists_metadata(track_id, client_id):
-    # TODO: Limit should be configurable? First 1000 should be enough
+    # TODO: Limit should be configurable? First 100 should be enough
     playlists_url = "https://api-v2.soundcloud.com/tracks/{0}/playlists_without_albums?representation=mini&" \
-                    "client_id={1}&limit=1000".format(track_id, client_id)
+                    "client_id={1}&limit=100".format(track_id, client_id)
     logging.info("Requesting playlists metadata from url: "+ playlists_url)
     playlists_info = get_html(playlists_url)
     playlist_names = list(map(lambda x: x["title"], playlists_info.json()["collection"]))
@@ -230,9 +319,9 @@ def get_track_playlists_metadata(track_id, client_id):
 
 
 def get_track_albums_metadata(track_id, client_id):
-    # TODO: Limit should be configurable? First 1000 should be enough
+    # TODO: Limit should be configurable? First 100 should be enough
     albums_url = "https://api-v2.soundcloud.com/tracks/{0}/albums?representation=mini&" \
-                    "client_id={1}&limit=1000".format(track_id, client_id)
+                    "client_id={1}&limit=100".format(track_id, client_id)
     logging.info("Requesting albums metadata from url: "+ albums_url)
     albums_info = get_html(albums_url)
     album_names = list(map(lambda x: x["title"], albums_info.json()["collection"]))
@@ -241,9 +330,9 @@ def get_track_albums_metadata(track_id, client_id):
 
 
 def get_related_metadata(track_id, client_id):
-    # TODO: Limit should be configurable? First 1000 should be enough
+    # TODO: Limit should be configurable? First 100 should be enough
     related_url = "https://api-v2.soundcloud.com/tracks/{0}/related?" \
-                  "client_id={1}&limit=1000".format(track_id, client_id)
+                  "client_id={1}&limit=100".format(track_id, client_id)
     logging.info("Requesting related tracks metadata from url: "+ related_url)
     related_info = get_html(related_url)
     related_names = list(map(lambda x: x["title"], related_info.json()["collection"]))
@@ -283,8 +372,8 @@ def archive_track(track_id, client_id, custom_artist_fn, track_metadata, artist_
     if track_metadata == []:
         export_metadata(track_info, track_path, "meta.json")
     else:
-        track_metadata = get_track_metadata(track_metadata, client_id, track_id, track_info, track_path)
-        export_metadata(track_metadata, track_path, "meta.json")
+        track_metadata1 = get_track_metadata(track_metadata, client_id, track_id, track_info, track_path)
+        export_metadata(track_metadata1, track_path, "meta.json")
 
     if artist_metadata != []:
         artist_metadata = get_artist_metadata(artist_metadata, client_id, track_info, artist_path)
@@ -293,7 +382,7 @@ def archive_track(track_id, client_id, custom_artist_fn, track_metadata, artist_
 
 logger = logging.getLogger("scdownload")
 
-client_id = "r5ELVSy3RkcjX7ilaL7n2v1Z8irA9SL8"
+client_id = "cZQKaMjH39KNADF4y2aeFtVqNSpgoKVj"
 
 
 def download(url, custom_artist_fn, track_metadata=[], artist_metadata=[]):
@@ -322,10 +411,11 @@ def download(url, custom_artist_fn, track_metadata=[], artist_metadata=[]):
         logger.error("No valid track or playlist ID found on page. Is this a valid SoundCloud link?")
         return -1
 
+
 def run_cmdline():
     # url = "https://soundcloud.com/yung-bruh-3/gemstone-bullets-poppin-out-the-tech"
     logger.info("Enter the SoundCloud URL of the track/playlist to download: ")
     soundcloud_url = input()
     result = download(soundcloud_url, input)
-    if (result < 0):
+    if result < 0:
         sys.exit(result)
