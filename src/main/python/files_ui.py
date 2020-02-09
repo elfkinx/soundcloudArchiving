@@ -31,9 +31,9 @@ class FilesUI:
         self.directory_tree_scroll.grid(row=1, column=1, sticky="nse")
 
     def build_directory_tree(self):
-        root = self.directory_tree.get_children()
-        to_delete = list(filter(lambda x: x != 'root', self.directory_tree.get_children()))
-        self.directory_tree.delete(to_delete)
+        # root = self.directory_tree.get_children()
+        # to_delete = list(filter(lambda x: x != 'root', self.directory_tree.get_children()))
+        # self.directory_tree.delete(to_delete)
         self.build_directory_tree_iter(DATA_PATH, self.directory_tree_root)
 
     def build_directory_tree_iter(self, path, parent):
