@@ -9,6 +9,7 @@ class FilesUI:
         self.directory_frame = tkinter.Frame(self.container)
         self.directory_tree_label = tkinter.Label(self.directory_frame, text="Files")
         self.directory_tree = ttk.Treeview(self.directory_frame)
+        self.directory_tree_root = self.directory_tree.insert('', 'end', 'root', text="Downloads")
         self.directory_tree_scroll = ttk.Scrollbar(self.directory_frame, orient="vertical", command=self.directory_tree.yview)
         self.directory_tree.configure(yscrollcommand=self.directory_tree_scroll.set)
         self.layout()
@@ -30,8 +31,10 @@ class FilesUI:
         self.directory_tree_scroll.grid(row=1, column=1, sticky="nse")
 
     def build_directory_tree(self):
-        root = self.directory_tree.insert('', 'end', 'root', text="Downloads")
-        self.build_directory_tree_iter(DATA_PATH, root)
+        root = self.directory_tree.get_children()
+        to_delete = list(filter(lambda x: x != 'root', self.directory_tree.get_children()))
+        self.directory_tree.delete(to_delete)
+        self.build_directory_tree_iter(DATA_PATH, self.directory_tree_root)
 
     def build_directory_tree_iter(self, path, parent):
         for next in os.listdir(path):

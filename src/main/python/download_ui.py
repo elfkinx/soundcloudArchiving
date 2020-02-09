@@ -22,26 +22,72 @@ class DownloadUI:
 
         self.metadata_frame = tkinter.Frame(self.container)
 
+        ####################### TRACK METADATA #######################################
+
         self.track_metadata_frame = tkinter.Frame(self.metadata_frame)
 
         self.track_title_label = tkinter.Label(self.track_metadata_frame, text="Track")
 
-        self.albums_button = tkinter.Button(self.track_metadata_frame, text="Albums")
-        self.artist_button = tkinter.Button(self.track_metadata_frame, text="Artist")
-        self.background_button = tkinter.Button(self.track_metadata_frame, text="Background")
-        self.comments_button = tkinter.Button(self.track_metadata_frame, text="Comments")
-        self.cover_art_button = tkinter.Button(self.track_metadata_frame, text="Cover Art")
-        self.date_button = tkinter.Button(self.track_metadata_frame, text="Date")
-        self.description_button = tkinter.Button(self.track_metadata_frame, text="Description")
-        self.likes_button = tkinter.Button(self.track_metadata_frame, text="Likes")
-        self.listens_button = tkinter.Button(self.track_metadata_frame, text="Listens")
-        self.playlists_button = tkinter.Button(self.track_metadata_frame, text="Playlists")
-        self.related_tracks_button = tkinter.Button(self.track_metadata_frame, text="Related Tracks")
-        self.reposts_button = tkinter.Button(self.track_metadata_frame, text="Reposts")
-        self.status_button = tkinter.Button(self.track_metadata_frame, text="Status")
-        self.tags_button = tkinter.Button(self.track_metadata_frame, text="Tags")
+        self.track_albums_button = tkinter.Button(self.track_metadata_frame, text="Albums")
+        self.track_artist_button = tkinter.Button(self.track_metadata_frame, text="Artist")
+        self.track_background_button = tkinter.Button(self.track_metadata_frame, text="Background")
+        self.track_comments_button = tkinter.Button(self.track_metadata_frame, text="Comments")
+        self.track_cover_art_button = tkinter.Button(self.track_metadata_frame, text="Cover Art")
+        self.track_date_button = tkinter.Button(self.track_metadata_frame, text="Date")
+        self.track_description_button = tkinter.Button(self.track_metadata_frame, text="Description")
+        self.track_likes_button = tkinter.Button(self.track_metadata_frame, text="Likes")
+        self.track_listens_button = tkinter.Button(self.track_metadata_frame, text="Listens")
+        self.track_playlists_button = tkinter.Button(self.track_metadata_frame, text="Playlists")
+        self.track_related_tracks_button = tkinter.Button(self.track_metadata_frame, text="Related Tracks")
+        self.track_reposts_button = tkinter.Button(self.track_metadata_frame, text="Reposts")
+        self.track_status_button = tkinter.Button(self.track_metadata_frame, text="Status")
+        self.track_tags_button = tkinter.Button(self.track_metadata_frame, text="Tags")
 
-        self.selected_metadata = set()
+        self.selected_track_metadata = set()
+
+        ######################## ARTIST METADATA #####################################
+
+        self.artist_metadata_frame = tkinter.Frame(self.metadata_frame)
+
+        self.artist_title_label = tkinter.Label(self.artist_metadata_frame, text="Artist")
+
+        self.artist_albums_button = tkinter.Button(self.artist_metadata_frame, text="Albums")
+        self.artist_comments_button = tkinter.Button(self.artist_metadata_frame, text="Comments")
+        self.artist_description_button = tkinter.Button(self.artist_metadata_frame, text="Description")
+        self.artist_location_button = tkinter.Button(self.artist_metadata_frame, text="Location")
+        self.artist_name_button = tkinter.Button(self.artist_metadata_frame, text="Name")
+        self.artist_username_button = tkinter.Button(self.artist_metadata_frame, text="Username")
+        self.artist_followers_button = tkinter.Button(self.artist_metadata_frame, text="Followers")
+        self.artist_following_button = tkinter.Button(self.artist_metadata_frame, text="Following")
+        self.artist_likes_button = tkinter.Button(self.artist_metadata_frame, text="Likes")
+        self.artist_reposts_button = tkinter.Button(self.artist_metadata_frame, text="Reposts")
+        self.artist_user_id_button = tkinter.Button(self.artist_metadata_frame, text="User ID")
+        self.artist_status_button = tkinter.Button(self.artist_metadata_frame, text="Status")
+        self.artist_profile_picture_button = tkinter.Button(self.artist_metadata_frame, text="Profile Picture")
+        self.artist_header_button = tkinter.Button(self.artist_metadata_frame, text="Header")
+        self.artist_links_button = tkinter.Button(self.artist_metadata_frame, text="Links")
+        self.artist_playlists_button = tkinter.Button(self.artist_metadata_frame, text="Playlists")
+        self.artist_spotlight_button = tkinter.Button(self.artist_metadata_frame, text="Spotlight")
+
+        self.selected_artist_metadata = set()
+
+        ########################## PLAYLIST METADATA #################################
+
+        self.playlist_metadata_frame = tkinter.Frame(self.metadata_frame)
+
+        self.playlist_title_label = tkinter.Label(self.playlist_metadata_frame, text="Playlist/Album")
+
+        self.playlist_artist_button = tkinter.Button(self.playlist_metadata_frame, text="Artist")
+        self.playlist_cover_art_button = tkinter.Button(self.playlist_metadata_frame, text="Cover Art")
+        self.playlist_date_button = tkinter.Button(self.playlist_metadata_frame, text="Date")
+        self.playlist_description_button = tkinter.Button(self.playlist_metadata_frame, text="Description")
+        self.playlist_length_button = tkinter.Button(self.playlist_metadata_frame, text="Length")
+        self.playlist_likes_button = tkinter.Button(self.playlist_metadata_frame, text="Likes")
+        self.playlist_reposts_button = tkinter.Button(self.playlist_metadata_frame, text="Reposts")
+        self.playlist_tags_button = tkinter.Button(self.playlist_metadata_frame, text="Tags")
+        self.playlist_tracks_button = tkinter.Button(self.playlist_metadata_frame, text="Tracks")
+
+        self.selected_playlist_metadata = set()
 
         self.bind_handlers()
         self.layout()
@@ -81,7 +127,7 @@ class DownloadUI:
         self.track_metadata_frame.grid(row=0, column=0, sticky="nsew")
         self.track_metadata_frame.rowconfigure(0, weight=1, uniform="row0")
         self.track_metadata_frame.rowconfigure(1, weight=1, uniform="row0")
-        self.track_metadata_frame.rowconfigure(3, weight=1, uniform="row0")
+        self.track_metadata_frame.rowconfigure(2, weight=1, uniform="row0")
         self.track_metadata_frame.columnconfigure(0, weight=1, uniform="col0")
         self.track_metadata_frame.columnconfigure(1, weight=1, uniform="col0")
         self.track_metadata_frame.columnconfigure(2, weight=1, uniform="col0")
@@ -93,51 +139,148 @@ class DownloadUI:
         self.track_title_label.grid(row=0, column=0, sticky="w")
 
         xpad = 3
-        ypad = 3
-        self.albums_button.grid(row=1, column=0, sticky="ew", padx=xpad)
-        self.artist_button.grid(row=1, column=1, sticky="ew", padx=xpad)
-        self.background_button.grid(row=1, column=2, sticky="ew", padx=xpad)
-        self.comments_button.grid(row=1, column=3, sticky="ew", padx=xpad)
-        self.cover_art_button.grid(row=1, column=4, sticky="ew", padx=xpad)
-        self.date_button.grid(row=1, column=5, sticky="ew", padx=xpad)
-        self.description_button.grid(row=1, column=6, sticky="ew", padx=xpad)
+        self.track_albums_button.grid(row=1, column=0, sticky="ew", padx=xpad)
+        self.track_artist_button.grid(row=1, column=1, sticky="ew", padx=xpad)
+        self.track_background_button.grid(row=1, column=2, sticky="ew", padx=xpad)
+        self.track_comments_button.grid(row=1, column=3, sticky="ew", padx=xpad)
+        self.track_cover_art_button.grid(row=1, column=4, sticky="ew", padx=xpad)
+        self.track_date_button.grid(row=1, column=5, sticky="ew", padx=xpad)
+        self.track_description_button.grid(row=1, column=6, sticky="ew", padx=xpad)
 
-        self.likes_button.grid(row=2, column=0, sticky="ew", padx=xpad)
-        self.listens_button.grid(row=2, column=1, sticky="ew", padx=xpad)
-        self.playlists_button.grid(row=2, column=2, sticky="ew", padx=xpad)
-        self.related_tracks_button.grid(row=2, column=3, sticky="ew", padx=xpad)
-        self.reposts_button.grid(row=2, column=4, sticky="ew", padx=xpad)
-        self.status_button.grid(row=2, column=5, sticky="ew", padx=xpad)
-        self.tags_button.grid(row=2, column=6, sticky="ew", padx=xpad)
+        self.track_likes_button.grid(row=2, column=0, sticky="ew", padx=xpad)
+        self.track_listens_button.grid(row=2, column=1, sticky="ew", padx=xpad)
+        self.track_playlists_button.grid(row=2, column=2, sticky="ew", padx=xpad)
+        self.track_related_tracks_button.grid(row=2, column=3, sticky="ew", padx=xpad)
+        self.track_reposts_button.grid(row=2, column=4, sticky="ew", padx=xpad)
+        self.track_status_button.grid(row=2, column=5, sticky="ew", padx=xpad)
+        self.track_tags_button.grid(row=2, column=6, sticky="ew", padx=xpad)
+
+        self.artist_title_label.grid(row=0, column=0, sticky="w")
+
+        self.artist_metadata_frame.grid(row=1, column=0, sticky="nsew")
+        self.artist_metadata_frame.rowconfigure(0, weight=1, uniform="row0")
+        self.artist_metadata_frame.rowconfigure(1, weight=1, uniform="row0")
+        self.artist_metadata_frame.rowconfigure(2, weight=1, uniform="row0")
+        self.artist_metadata_frame.rowconfigure(3, weight=1, uniform="row0")
+        self.artist_metadata_frame.columnconfigure(0, weight=1, uniform="col0")
+        self.artist_metadata_frame.columnconfigure(1, weight=1, uniform="col0")
+        self.artist_metadata_frame.columnconfigure(2, weight=1, uniform="col0")
+        self.artist_metadata_frame.columnconfigure(3, weight=1, uniform="col0")
+        self.artist_metadata_frame.columnconfigure(4, weight=1, uniform="col0")
+        self.artist_metadata_frame.columnconfigure(5, weight=1, uniform="col0")
+        self.artist_metadata_frame.columnconfigure(6, weight=1, uniform="col0")
+
+        self.artist_albums_button.grid(row=1, column=0, sticky="ew", padx=xpad)
+        self.artist_comments_button.grid(row=1, column=1, sticky="ew", padx=xpad)
+        self.artist_description_button.grid(row=1, column=2, sticky="ew", padx=xpad)
+        self.artist_location_button.grid(row=1, column=3, sticky="ew", padx=xpad)
+        self.artist_name_button.grid(row=1, column=4, sticky="ew", padx=xpad)
+        self.artist_username_button.grid(row=1, column=5, sticky="ew", padx=xpad)
+        self.artist_following_button.grid(row=1, column=6, sticky="ew", padx=xpad)
+
+        self.artist_likes_button.grid(row=2, column=0, sticky="ew", padx=xpad)
+        self.artist_reposts_button.grid(row=2, column=1, sticky="ew", padx=xpad)
+        self.artist_user_id_button.grid(row=2, column=2, sticky="ew", padx=xpad)
+        self.artist_status_button.grid(row=2, column=3, sticky="ew", padx=xpad)
+        self.artist_profile_picture_button.grid(row=2, column=4, sticky="ew", padx=xpad)
+        self.artist_header_button.grid(row=2, column=5, sticky="ew", padx=xpad)
+        self.artist_links_button.grid(row=2, column=6, sticky="ew", padx=xpad)
+
+        self.artist_playlists_button.grid(row=3, column=0, sticky="ew", padx=xpad)
+        self.artist_spotlight_button.grid(row=3, column=1, sticky="ew", padx=xpad)
+
+        self.playlist_metadata_frame.grid(row=2, column=0, sticky="nsew")
+        self.playlist_metadata_frame.rowconfigure(0, weight=1, uniform="row0")
+        self.playlist_metadata_frame.rowconfigure(1, weight=1, uniform="row0")
+        self.playlist_metadata_frame.rowconfigure(2, weight=1, uniform="row0")
+        self.playlist_metadata_frame.columnconfigure(0, weight=1, uniform="col0")
+        self.playlist_metadata_frame.columnconfigure(1, weight=1, uniform="col0")
+        self.playlist_metadata_frame.columnconfigure(2, weight=1, uniform="col0")
+        self.playlist_metadata_frame.columnconfigure(3, weight=1, uniform="col0")
+        self.playlist_metadata_frame.columnconfigure(4, weight=1, uniform="col0")
+        self.playlist_metadata_frame.columnconfigure(5, weight=1, uniform="col0")
+        self.playlist_metadata_frame.columnconfigure(6, weight=1, uniform="col0")
+
+        self.playlist_title_label.grid(row=0, column=0, sticky="w")
+
+        self.playlist_artist_button.grid(row=1, column=0, stick="ew", padx=xpad)
+        self.playlist_cover_art_button.grid(row=1, column=1, stick="ew", padx=xpad)
+        self.playlist_date_button.grid(row=1, column=2, stick="ew", padx=xpad)
+        self.playlist_description_button.grid(row=1, column=3, stick="ew", padx=xpad)
+        self.playlist_length_button.grid(row=1, column=4, stick="ew", padx=xpad)
+        self.playlist_likes_button.grid(row=1, column=5, stick="ew", padx=xpad)
+        self.playlist_reposts_button.grid(row=1, column=6, stick="ew", padx=xpad)
+
+        self.playlist_tags_button.grid(row=2, column=0, stick="ew", padx=xpad)
+        self.playlist_tracks_button.grid(row=2, column=1, stick="ew", padx=xpad)
+
 
     def bind_handlers(self):
         self.download_button.bind("<Button-1>", self.download_button_click)
         self.preview_button.bind("<Button-1>", self.preview_button_click)
         self.url_input.bind("<Button-1>", self.force_focus)
-        self.albums_button.bind("<Button-1>", self.tag_button_handler)
-        self.artist_button.bind("<Button-1>", self.tag_button_handler)
-        self.background_button.bind("<Button-1>", self.tag_button_handler)
-        self.comments_button.bind("<Button-1>", self.tag_button_handler)
-        self.cover_art_button.bind("<Button-1>", self.tag_button_handler)
-        self.date_button.bind("<Button-1>", self.tag_button_handler)
-        self.description_button.bind("<Button-1>", self.tag_button_handler)
-        self.likes_button.bind("<Button-1>", self.tag_button_handler)
-        self.listens_button.bind("<Button-1>", self.tag_button_handler)
-        self.playlists_button.bind("<Button-1>", self.tag_button_handler)
-        self.related_tracks_button.bind("<Button-1>", self.tag_button_handler)
-        self.reposts_button.bind("<Button-1>", self.tag_button_handler)
-        self.status_button.bind("<Button-1>", self.tag_button_handler)
-        self.tags_button.bind("<Button-1>", self.tag_button_handler)
 
-    def tag_button_handler(self, event):
+        self.track_albums_button.bind("<Button-1>", self.track_tag_button_handler)
+        self.track_artist_button.bind("<Button-1>", self.track_tag_button_handler)
+        self.track_background_button.bind("<Button-1>", self.track_tag_button_handler)
+        self.track_comments_button.bind("<Button-1>", self.track_tag_button_handler)
+        self.track_cover_art_button.bind("<Button-1>", self.track_tag_button_handler)
+        self.track_date_button.bind("<Button-1>", self.track_tag_button_handler)
+        self.track_description_button.bind("<Button-1>", self.track_tag_button_handler)
+        self.track_likes_button.bind("<Button-1>", self.track_tag_button_handler)
+        self.track_listens_button.bind("<Button-1>", self.track_tag_button_handler)
+        self.track_playlists_button.bind("<Button-1>", self.track_tag_button_handler)
+        self.track_related_tracks_button.bind("<Button-1>", self.track_tag_button_handler)
+        self.track_reposts_button.bind("<Button-1>", self.track_tag_button_handler)
+        self.track_status_button.bind("<Button-1>", self.track_tag_button_handler)
+        self.track_tags_button.bind("<Button-1>", self.track_tag_button_handler)
+
+        self.artist_albums_button.bind("<Button-1>", self.artist_tag_button_handler)
+        self.artist_comments_button.bind("<Button-1>", self.artist_tag_button_handler)
+        self.artist_description_button.bind("<Button-1>", self.artist_tag_button_handler)
+        self.artist_location_button.bind("<Button-1>", self.artist_tag_button_handler)
+        self.artist_name_button.bind("<Button-1>", self.artist_tag_button_handler)
+        self.artist_username_button.bind("<Button-1>", self.artist_tag_button_handler)
+        self.artist_followers_button.bind("<Button-1>", self.artist_tag_button_handler)
+        self.artist_following_button.bind("<Button-1>", self.artist_tag_button_handler)
+        self.artist_likes_button.bind("<Button-1>", self.artist_tag_button_handler)
+        self.artist_reposts_button.bind("<Button-1>", self.artist_tag_button_handler)
+        self.artist_user_id_button.bind("<Button-1>", self.artist_tag_button_handler)
+        self.artist_status_button.bind("<Button-1>", self.artist_tag_button_handler)
+        self.artist_profile_picture_button.bind("<Button-1>", self.artist_tag_button_handler)
+        self.artist_header_button.bind("<Button-1>", self.artist_tag_button_handler)
+        self.artist_links_button.bind("<Button-1>", self.artist_tag_button_handler)
+        self.artist_playlists_button.bind("<Button-1>", self.artist_tag_button_handler)
+        self.artist_spotlight_button.bind("<Button-1>", self.artist_tag_button_handler)
+
+        self.playlist_artist_button.bind("<Button-1>", self.playlist_tag_button_handler)
+        self.playlist_cover_art_button.bind("<Button-1>", self.playlist_tag_button_handler)
+        self.playlist_date_button.bind("<Button-1>", self.playlist_tag_button_handler)
+        self.playlist_description_button.bind("<Button-1>", self.playlist_tag_button_handler)
+        self.playlist_length_button.bind("<Button-1>", self.playlist_tag_button_handler)
+        self.playlist_likes_button.bind("<Button-1>", self.playlist_tag_button_handler)
+        self.playlist_reposts_button.bind("<Button-1>", self.playlist_tag_button_handler)
+        self.playlist_tags_button.bind("<Button-1>", self.playlist_tag_button_handler)
+        self.playlist_tracks_button.bind("<Button-1>", self.playlist_tag_button_handler)
+
+    def track_tag_button_handler(self, event):
+        self.tag_button_handler(event, self.selected_track_metadata)
+
+    def artist_tag_button_handler(self, event):
+        self.tag_button_handler(event, self.selected_artist_metadata)
+
+    def playlist_tag_button_handler(self, event):
+        self.tag_button_handler(event, self.selected_playlist_metadata)
+
+    def tag_button_handler(self, event, metadata_store):
         metadata_clicked = self.button_name_to_key(event.widget['text'])
         if event.widget['bg'] == "#48cbd4":
-            logging.info("De-selecting metadata: "+ metadata_clicked)
-            self.selected_metadata.remove(metadata_clicked)
+            logging.info("De-selecting metadata: " + metadata_clicked)
+            metadata_store.remove(metadata_clicked)
             event.widget.configure(bg="#FFF", fg="#000")
         else:
-            logging.info("Selecting metadata: "+ metadata_clicked)
-            self.selected_metadata.add(metadata_clicked)
+            logging.info("Selecting metadata: " + metadata_clicked)
+            metadata_store.add(metadata_clicked)
             event.widget.configure(bg="#48cbd4", fg="#FFF")
 
     def button_name_to_key(self, name):
@@ -151,11 +294,11 @@ class DownloadUI:
         if self.url_input.get() != "":
             # TODO: Make this async so it doesn't lock up the UI
             # TODO: Check track metadata works for playlist URLs
-            logging.info("Downloading with metadata: "+ str(self.selected_metadata))
-            result = scdownload.download(self.url_input.get(), self.custom_artist_fn, self.selected_metadata,
-                                         ['albums', 'comments', 'description', 'location', 'name', 'username',
-                                          'followers', 'following', 'likes', 'reposts', 'user_id', 'status',
-                                          'profile_picture', 'header', 'links'])
+            logging.info("Downloading with track metadata: " + str(self.selected_track_metadata))
+            logging.info("Downloading with artist metadata: " + str(self.selected_artist_metadata))
+            logging.info("Downloading with playlist metadata: " + str(self.selected_playlist_metadata))
+            result = scdownload.download(self.url_input.get(), self.custom_artist_fn, self.selected_track_metadata,
+                                         self.selected_artist_metadata, self.selected_playlist_metadata)
             messagebox.showinfo("Alert", "Downloaded with result: " + str(result))
             # TODO: Make file tree view refresh on new downloads
         else:
