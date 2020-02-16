@@ -330,6 +330,8 @@ class DownloadUI:
         return ""
 
 # The code below displays a preview of the webpage using the cef module
+# This is adapted from the cefpython examples for tkinter:
+#   https://github.com/cztomczak/cefpython/blob/master/examples/tkinter_.py#L148
 class BrowserFrame(tkinter.Frame):
     def __init__(self, master, cnf={}, **kw):
         self.closing = False
