@@ -5,6 +5,15 @@ import ctypes
 import logging
 import main.python.scdownload as scdownload
 
+"""
+scdownload (SoundCloud Downloader)
+
+This file defines the left-hand side of the GUI concerned with:
+- specifying the soundcloud track URL in order to preview or download
+- displaying a HTML rendered preview of the soundcloud track page (using cef)
+- toggling different pieces of metadata to download about the track, artist, or playlist/album
+
+"""
 
 class DownloadUI:
     def __init__(self, parent):
@@ -272,6 +281,8 @@ class DownloadUI:
     def playlist_tag_button_handler(self, event):
         self.tag_button_handler(event, self.selected_playlist_metadata)
 
+    # We toggle the colour of the button after it has been pressed and add the corresponding metadata key to the given
+    # metadata_store set in order to download the correct metadata when requested
     def tag_button_handler(self, event, metadata_store):
         metadata_clicked = self.button_name_to_key(event.widget['text'])
         if event.widget['bg'] == "#48cbd4":
@@ -292,18 +303,16 @@ class DownloadUI:
     def download_button_click(self, event):
         logging.info("Download button click")
         if self.url_input.get() != "":
-            # TODO: Make this async so it doesn't lock up the UI
-            # TODO: Check track metadata works for playlist URLs
+            # An important improvement to the app would be to make the download functionality asynchronous so that it
+            # doesn't block the UI (especially when downloading e.g. large playlists)
             logging.info("Downloading with track metadata: " + str(self.selected_track_metadata))
             logging.info("Downloading with artist metadata: " + str(self.selected_artist_metadata))
             logging.info("Downloading with playlist metadata: " + str(self.selected_playlist_metadata))
             result = scdownload.download(self.url_input.get(), self.custom_artist_fn, self.selected_track_metadata,
                                          self.selected_artist_metadata, self.selected_playlist_metadata)
             messagebox.showinfo("Alert", "Downloaded with result: " + str(result))
-            # TODO: Make file tree view refresh on new downloads
         else:
             logging.info("Ignoring download click due to empty input")
-        # return "break"  # required or button remains sunken after click
 
     def preview_button_click(self, event):
         logging.info("Preview button click")
@@ -314,10 +323,13 @@ class DownloadUI:
         # return "break"
 
     def custom_artist_fn(self):
-        # TODO: Can add popup box or something here for user to confirm artist name
+        # This would be a place to add a custom pop-up (or other functionality) in order to determine what the correct
+        # artist name is for a download. This isn't possible to determine from the soundcloud information, and at the
+        # moment it defaults to the username of the user who uploaded the track.
+        # This is called back during the download process
         return ""
 
-
+# The code below displays a preview of the webpage using the cef module
 class BrowserFrame(tkinter.Frame):
     def __init__(self, master, cnf={}, **kw):
         self.closing = False
@@ -328,8 +340,7 @@ class BrowserFrame(tkinter.Frame):
         self.bind("<Configure>", self.on_configure)
         self.focus_set()
 
-#"https://soundcloud.com/cryingelf/ayw-its-a-bonfire"
-
+    # This is where we update the preview when the button is clicked by the user
     def update_url(self, url):
         self.browser.StopLoad()
         self.browser.LoadUrl(url)
@@ -338,6 +349,7 @@ class BrowserFrame(tkinter.Frame):
         self.window_info = cef.WindowInfo()
         rect = [0, 0, self.winfo_width(), self.winfo_height()]
         self.window_info.SetAsChild(self.get_window_handle(), rect)
+        # The URL below is used as a default in order to demonstrate the preview functionality
         self.browser = cef.CreateBrowserSync(self.window_info, url="https://soundcloud.com/cryingelf/ayw-its-a-bonfire")
         assert self.browser
         self.message_loop_work()
@@ -345,6 +357,10 @@ class BrowserFrame(tkinter.Frame):
     def get_window_handle(self):
         return self.winfo_id()
 
+    # This responds to user input by checking in a busy loop (every 10ms) for changes
+    # This is sub-optimal and can lead to excessive CPU consumption. An alternative solution would be to use the async
+    # CEF api but this hasn't been ported to pythong yet and would likely require significant additions to the cef
+    # python wrapper
     def message_loop_work(self):
         cef.MessageLoopWork()
         self.after(10, self.message_loop_work)

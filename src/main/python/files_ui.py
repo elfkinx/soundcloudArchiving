@@ -3,6 +3,13 @@ import os
 from tkinter import ttk
 from definitions import DATA_PATH
 
+"""
+scdownload (SoundCloud Downloader)
+
+This file defines the right-hand side of the GUI concerned with displaying downloaded files in the directory structure
+
+"""
+
 class FilesUI:
     def __init__(self, parent):
         self.container = tkinter.Frame(parent)
@@ -30,12 +37,19 @@ class FilesUI:
         self.directory_tree.grid(row=1, column=0, sticky="nsew")
         self.directory_tree_scroll.grid(row=1, column=1, sticky="nse")
 
+    # Build the file tree when the program starts-up
+    # The program could be improved to refresh this data every time a new track is downloaded (and even if a change
+    # is detected on the filesystem). Currently an app restart is required in order to refresh this information
     def build_directory_tree(self):
-        # root = self.directory_tree.get_children()
-        # to_delete = list(filter(lambda x: x != 'root', self.directory_tree.get_children()))
-        # self.directory_tree.delete(to_delete)
         self.build_directory_tree_iter(DATA_PATH, self.directory_tree_root)
 
+    # Use a recursive algorithm to display all files and folders in a given directory, including all subdirectories
+    # thereof
+    # Recursive algorithm:
+    #   1. Create root directory element
+    #   2. Iterate over all files and subdirectories in the current directory
+    #   3. Add these as children of the parent directory in the view
+    #   4. Repeat this process for all subdirectories
     def build_directory_tree_iter(self, path, parent):
         for next in os.listdir(path):
             next_path = os.path.join(path, next)
